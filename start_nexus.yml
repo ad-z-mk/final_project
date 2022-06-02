@@ -1,0 +1,73 @@
+- name: Start-nexus
+  gather_facts: No
+  hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+
+    - name: Start nexus
+      docker_container:
+        name: nexus
+        image: sonatype/nexus3
+        state: started
+        restart: yes
+        ports:
+          - "8081:8081"
+
+    - name: pause
+      pause:
+        minutes: 2
+
+    - name: Get pass
+      become: yes
+      become_method: sudo
+      shell: "sudo docker exec -it nexus cat /nexus-data/admin.password"
+      register: admin_pass
+
+    - name: Dependencies_repo
+      vars:
+          maven_depen:
+            name: maven_depend
+            online: true
+            storage:
+              blobStoreName: default
+              strictContentTypeValidation: false
+              writePolicy: allow_once
+            cleanup:
+              policyNames: [
+                "string"
+              ]
+            component:
+              proprietaryComponents: true
+            maven:
+              versionPolicy: MIXED
+              layoutPolicy: STRICT
+              contentDisposition: ATTACHMENT
+      shell: "curl -v -u admin:{{admin_pass.stdout}} -X POST -d '{{ maven_depen | to_json }}' -H 'Content-Type:application/json' 'http://localhost:8081/service/rest/v1/repositories/maven/hosted'"
+      #http://localhost:8081/repository/maven_depend/
+
+    - name: Packages_repo
+      vars:
+          maven_package:
+            name: maven_packages
+            online: true
+            storage:
+              blobStoreName: default
+              strictContentTypeValidation: true
+              writePolicy: allow_once
+            cleanup:
+              policyNames: [
+                "string"
+              ]
+            component:
+              proprietaryComponents: true
+            maven:
+              versionPolicy: MIXED
+              layoutPolicy: STRICT
+              contentDisposition: ATTACHMENT
+      shell: "curl -v -u admin:{{admin_pass.stdout}} -X POST -d '{{ maven_package | to_json }}' -H 'Content-Type:application/json' 'http://localhost:8081/service/rest/v1/repositories/maven/hosted'"
+      #http://localhost:8081/repository/maven_packages/
+
+    - name: Change password to default
+      shell: "curl -v -u admin:{{admin_pass.stdout}} -X PUT -H 'Content-Type: text/plain' --data 'admin123' http://localhost:8081/service/rest/v1/security/users/admin/change-password"
+

@@ -1,0 +1,28 @@
+- name: Start-jenkins
+  gather_facts: No
+  hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+
+    - name: Start jenkins
+      docker_container:
+        name: jen
+        image: amukanov/jenkins
+        state: started
+        restart: yes
+        ports:
+          - "8080:8080"
+        volumes:
+          - ./:/var/jenkins_conf
+        env:
+            CASC_JENKINS_CONFIG: /var/jenkins_conf
+            NEXUS_URL: http://51.250.84.194:8081
+
+    - name: Copy file 
+      ansible.builtin.copy:
+        src: /home/user/jenkins.yaml
+        dest: /home/user/jenkins.yaml
+        owner: user
+        group: user
+        mode: '0644'

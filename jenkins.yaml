@@ -1,0 +1,115 @@
+jenkins:
+  systemMessage: "Jenkins Configured using Code"
+
+  numExecutors: 1
+  mode: NORMAL
+  scmCheckoutRetryCount: 3
+  globalNodeProperties:
+    - envVars:
+        env:
+        - key: "JAVA_HOME"
+          value: "/var/jenkins_home/tools/hudson.model.JDK/java/jdk-18.0.1.1"
+  labelString: "master-label"  
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+       - id: admin
+         password: ${adminpw:-passw0rd}
+
+  authorizationStrategy:
+    globalMatrix:
+      grantedPermissions:
+        - "Overall/Read:anonymous"
+        - "Job/Read:anonymous"
+        - "View/Read:anonymous"
+        - "Overall/Administer:anonymous"
+
+  crumbIssuer: "standard"
+
+  remotingSecurity:
+    enabled: true    
+
+unclassified:
+  location:
+    adminAddress: "jenkins@example.com"
+    url: "http://jenkins.example.com/"
+  globalConfigFiles:
+    configs:
+    - mavenSettings:
+        comment: "User settings"
+        content: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\
+          \ \n          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n\
+          \          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\"\
+          >\n  <servers>\n    <server>\n      <id>depend</id>\n      <username>admin</username>\n\
+          \      <password>admin123</password>\n    </server>\n  </servers>\n  <!--<profiles>\n\
+          \    <profile>\n        <id>localRepositories</id>\n        <repositories>\n\
+          \            <repository>\n            <releases>\n                <enabled>false</enabled>\n\
+          \                <updatePolicy>always</updatePolicy>\n                <checksumPolicy>warn</checksumPolicy>\n\
+          \            </releases>\n            <snapshots>\n                <enabled>true</enabled>\n\
+          \                <updatePolicy>never</updatePolicy>\n                <checksumPolicy>fail</checksumPolicy>\n\
+          \            </snapshots>\n            <id>depend</id>\n            <name>depend</name>\n\
+          \            <url>NEXUS_URL/repository/maven_depend/</url>\n           \
+          \ <layout>default</layout>\n            </repository>\n        </repositories>\n\
+          \    </profile>\n  </profiles>\n<activeProfiles><activeProfile>localRepositories</activeProfile></activeProfiles>-->\n\
+          </settings>"
+        id: "56864d6f-7de8-4fbc-a764-0cb9a6d15334"
+        isReplaceAll: true
+        name: "deploy_settings"
+        providerId: "org.jenkinsci.plugins.configfiles.maven.MavenSettingsConfig"
+    - mavenSettings:
+        comment: "User settings"
+        content: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\
+          \ \n          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n\
+          \          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\"\
+          >\n  <servers>\n    <server>\n      <id>packages</id>\n      <username>admin</username>\n\
+          \      <password>admin123</password>\n    </server>\n  </servers>\n  <profiles>\n\
+          \    <profile>\n        <id>localRepositories</id>\n        <repositories>\n\
+          \            <repository>\n            <releases>\n                <enabled>false</enabled>\n\
+          \                <updatePolicy>always</updatePolicy>\n                <checksumPolicy>warn</checksumPolicy>\n\
+          \            </releases>\n            <snapshots>\n                <enabled>true</enabled>\n\
+          \                <updatePolicy>never</updatePolicy>\n                <checksumPolicy>fail</checksumPolicy>\n\
+          \            </snapshots>\n            <id>packages</id>\n            <name>packages</name>\n\
+          \            <url>${NEXUS_URL}/repository/maven_packages/</url>\n\
+          \            <layout>default</layout>\n            </repository>\n     \
+          \       <!--<repository>\n            <id>central</id>\n            <name>central</name>\n\
+          \            <url>http://51.250.110.83:8081/repository/maven-central</url>\n\
+          \            </repository>-->\n        </repositories>\n    </profile>\n\
+          \  </profiles>\n  <mirrors>\n  <mirror>\n      <id>packages</id>\n     \
+          \ <mirrorOf>*</mirrorOf>\n      <name>packages</name>\n      <url>${NEXUS_URL}/repository/maven_depend/</url>\n\
+          \  </mirror>\n   <!-- <mirror>\n      <id>central</id>\n      <mirrorOf>*</mirrorOf>\n\
+          \      <name>packages</name>\n      <url>http://51.250.110.83:8081/repository/maven-central/</url>\n\
+          \  </mirror>\n    <mirror>\n      <id>packages</id>\n      <mirrorOf>*</mirrorOf>\n\
+          \      <name>Mirror for dependencies</name>\n      <url>http:/51.250.110.83:8081/repository/maven_depend/</url>\n\
+          \  </mirror>-->\n  </mirrors>\n<activeProfiles><activeProfile>localRepositories</activeProfile></activeProfiles>\n\
+          </settings>"
+        id: "fa990752-f6af-4a33-b7e1-33bab7fc9828"
+        isReplaceAll: true
+        name: "package_settings"
+        providerId: "org.jenkinsci.plugins.configfiles.maven.MavenSettingsConfig"
+
+
+tool:
+  git:
+    installations:
+      - name: Default
+        home: "git"
+
+  maven:
+    installations:
+      - name: "maven3"
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.5.4"
+
+  jdk:
+    installations:
+    - name: "java"
+      properties:
+      - installSource:
+          installers:
+          - zip:
+              url: "https://download.oracle.com/java/18/latest/jdk-18_linux-x64_bin.tar.gz"

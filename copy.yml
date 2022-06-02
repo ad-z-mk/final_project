@@ -1,0 +1,14 @@
+- name: copy
+  gather_facts: No
+  hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+
+    - name: Copy file 
+      ansible.builtin.copy:
+        src: /home/user/jenkins.yaml
+        dest: /home/user/jenkins.yaml
+        owner: user
+        group: user
+        mode: '0644'

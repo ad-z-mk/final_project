@@ -1,0 +1,58 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <jenkins.triggers.ReverseBuildTrigger>
+          <spec></spec>
+          <upstreamProjects>job1</upstreamProjects>
+          <threshold>
+            <name>SUCCESS</name>
+            <ordinal>0</ordinal>
+            <color>BLUE</color>
+            <completeBuild>true</completeBuild>
+          </threshold>
+        </jenkins.triggers.ReverseBuildTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>node {
+    stage(&apos;clean&apos;){
+        cleanWs()
+    }
+    stage(&apos;Preparation&apos;) { 
+        sh &quot;[ ! -d &apos;/repos/&apos; ] &amp;&amp; mkdir -p repos&quot;
+        sh &apos;cp -a /var/jenkins_home/.m2/repository/. repos&apos;
+        //sh &apos;find ./repos -type f -name &quot;*.jar&quot; &gt; fjar.txt&apos;
+        sh &apos;find ./repos -type f -name &quot;*.jar&quot; -o -name &quot;*.pom&quot; &gt; fall.txt&apos;
+        sh &apos;touch poms.txt&apos;
+        //sh &apos;echo $NEXUS_URL/repository/maven-releases/&apos;
+        //sh &apos;find ./repos -type f -name &quot;*.jar&quot; -o -name &quot;*.pom&quot; &gt; test.txt&apos;
+    }
+    stage(&apos;search&apos;) {
+        withMaven(
+            maven: &apos;maven3&apos;, // (1)
+            mavenLocalRepo: &apos;../../.m2/repository&apos;, // (2)
+            mavenSettingsConfig: &apos;56864d6f-7de8-4fbc-a764-0cb9a6d15334&apos; // (3)56864d6f-7de8-4fbc-a764-0cb9a6d15334
+        ){
+        sh &apos;while read line; do echo ${line::-4} &gt;&gt; poms.txt; done &lt; fall.txt&apos;
+        sh &apos;sort poms.txt | uniq -u poms.txt only_poms.txt&apos;
+        sh &apos;while read lin; do pomm=$lin.pom; if grep -q $pomm fall.txt; then mvn deploy:deploy-file -X -Durl=$NEXUS_URL/repository/maven_depend/ -Dfile=$pomm -DpomFile=$pomm -DrepositoryId=depend; fi; done &lt; only_poms.txt&apos;
+        sh &apos;cp -a /var/jenkins_home/.m2/repository/. repos&apos;
+        sh &apos;find ./repos -type f -name &quot;*.jar&quot; &gt; fjar.txt&apos;
+        sh &apos;while read line; do echo $line; name=${line::-4}; poms=$name.pom; mvn deploy:deploy-file -X -Durl=$NEXUS_URL/repository/maven_depend/ -Dfile=$line -DpomFile=$poms -DrepositoryId=depend; done &lt; fjar.txt&apos;
+        sh &apos;mvn deploy:deploy-file -Durl=$NEXUS_URL/repository/maven_depend/ -Dfile=./repos/org/apache/xbean/xbean-reflect/3.4/xbean-reflect-3.4.jar -DgroupId=org.apache.xbean -DartifactId=xbean-reflect -Dversion=3.4 -DgeneratePom=false -DrepositoryId=depend&apos;
+        sh &apos;mvn deploy:deploy-file -Durl=$NEXUS_URL/repository/maven_depend/ -Dfile=./repos/org/codehaus/plexus/plexus/1.0.12/plexus-1.0.12.pom -DgroupId=org.codehaus.plexus -DartifactId=plexus -Dversion=1.0.12 -DrepositoryId=depend&apos;
+            
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
